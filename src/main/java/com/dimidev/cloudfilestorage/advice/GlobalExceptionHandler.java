@@ -4,6 +4,7 @@ import com.dimidev.cloudfilestorage.exception.ApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -56,6 +57,15 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Validation failed");
         problemDetail.setProperty("errors", errors);
 
+        return problemDetail;
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handleAuthenticationException(AuthenticationException e) {
+        log.warn("Authentication failed: {}", e.getMessage());
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+        problemDetail.setTitle("Unauthorized");
+        problemDetail.setDetail("Неверное имя пользователя или пароль");
         return problemDetail;
     }
 

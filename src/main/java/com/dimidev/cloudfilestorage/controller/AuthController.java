@@ -23,7 +23,7 @@ public class AuthController implements AuthApi {
 
     @Override
     @PostMapping("/sign-up")
-    public UserReadDto registration(@RequestBody UserUpsertDto dto,
+    public UserReadDto registration(@Valid @RequestBody UserUpsertDto dto,
                                     HttpServletRequest request,
                                     HttpServletResponse response) {
         return authService.registration(dto, request, response);
@@ -31,7 +31,7 @@ public class AuthController implements AuthApi {
 
     @Override
     @PostMapping("/sign-in")
-    public UserReadDto login(@RequestBody UserAuthDto dto,
+    public UserReadDto login(@Valid @RequestBody UserAuthDto dto,
                              HttpServletRequest request,
                              HttpServletResponse response) {
         return authService.login(dto, request, response);
