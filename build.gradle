@@ -28,6 +28,7 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-api:3.0.2'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    implementation 'io.minio:minio:8.6.0'
 
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'org.postgresql:postgresql'
@@ -35,6 +36,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
 
+    testImplementation("org.springframework.boot:spring-boot-starter-test:4.1.0")
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.testcontainers:junit-jupiter:1.19.7'
     testImplementation 'org.testcontainers:postgresql:1.19.7'
