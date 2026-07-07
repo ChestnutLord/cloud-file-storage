@@ -30,7 +30,7 @@ public class itAuthControllerTests extends IntegrationTestBase {
     private UserService userService;
 
     @Test
-    @DisplayName("Успешная регистрация нового пользователя возвращает 200 OK")
+    @DisplayName("Успешная регистрация нового пользователя возвращает 201 Created")
     void givenValidDto_whenRegister_thenSuccessResponseAndUserSaved() throws Exception {
         // given
         UserUpsertDto validDto = new UserUpsertDto("dmitry", "password", "password");
@@ -43,7 +43,7 @@ public class itAuthControllerTests extends IntegrationTestBase {
         // then
         result
                 .andDo(print())
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username").value("dmitry"));
 
         assertThat(userRepository.findByUsername("dmitry")).isPresent();
@@ -62,7 +62,8 @@ public class itAuthControllerTests extends IntegrationTestBase {
 
         // then
         result.andDo(print())
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -78,7 +79,8 @@ public class itAuthControllerTests extends IntegrationTestBase {
 
         // then
         result.andDo(print())
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -90,7 +92,7 @@ public class itAuthControllerTests extends IntegrationTestBase {
         mockMvc.perform(post("/auth/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validDto)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
         assertThat(userRepository.findByUsername("dmitry")).isPresent();
 
         // when
@@ -100,7 +102,8 @@ public class itAuthControllerTests extends IntegrationTestBase {
 
         // then
         result.andDo(print())
-                .andExpect(status().isConflict());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -134,7 +137,8 @@ public class itAuthControllerTests extends IntegrationTestBase {
 
         // then
         result.andDo(print())
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -150,7 +154,8 @@ public class itAuthControllerTests extends IntegrationTestBase {
 
         //then
         result.andDo(print())
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -161,7 +166,7 @@ public class itAuthControllerTests extends IntegrationTestBase {
         mockMvc.perform(post("/auth/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRegistrationDto)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         assertThat(userRepository.findByUsername("dmitry")).isPresent();
 
@@ -174,6 +179,7 @@ public class itAuthControllerTests extends IntegrationTestBase {
 
         // then
         result.andDo(print())
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").exists());
     }
 }

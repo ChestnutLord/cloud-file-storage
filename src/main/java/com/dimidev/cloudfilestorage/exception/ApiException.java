@@ -12,6 +12,11 @@ public class ApiException extends ResponseStatusException {
         this.status = status;
     }
 
+    public ApiException(HttpStatus status, String reason, Throwable cause) {
+        super(status, reason, cause);
+        this.status = status;
+    }
+
     public String getStatusMessage() {
         return status.getReasonPhrase();
     }

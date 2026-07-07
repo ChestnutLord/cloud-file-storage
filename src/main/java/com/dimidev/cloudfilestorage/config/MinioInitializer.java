@@ -35,7 +35,7 @@ public class MinioInitializer implements ApplicationRunner {
             }
         } catch (Exception e) {
             log.error("Failed to initialize MinIO bucket: {}", e.getMessage());
-            throw new IllegalStateException("MinIO initialization failed", e);
+            throw new IllegalStateException("Не удалось инициализировать MinIO", e);
         }
     }
 }

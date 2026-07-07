@@ -9,6 +9,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,10 +25,11 @@ public class AuthController implements AuthApi {
 
     @Override
     @PostMapping("/sign-up")
-    public UserReadDto registration(@Valid @RequestBody UserUpsertDto dto,
-                                    HttpServletRequest request,
-                                    HttpServletResponse response) {
-        return authService.registration(dto, request, response);
+    public ResponseEntity<UserReadDto> registration(@Valid @RequestBody UserUpsertDto dto,
+                                                    HttpServletRequest request,
+                                                    HttpServletResponse response) {
+        UserReadDto user = authService.registration(dto, request, response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
     @Override
