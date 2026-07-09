@@ -62,7 +62,7 @@ public class ResourceService {
             throw new DuplicateResourceException("Файл уже существует");
         }
 
-        String parentDirectory = PathUtils.extractParentDirectory(relativeFilePath);
+        String parentDirectory = PathUtils.splitFilePath(relativeFilePath).path();
         ensureDirectoryHierarchyExists(userId, parentDirectory, ensuredDirectories);
 
         try {

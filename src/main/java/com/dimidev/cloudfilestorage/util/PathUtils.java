@@ -63,15 +63,16 @@ public final class PathUtils {
     }
 
     public static String toStorageKey(long userId, String relativePath) {
-        return "user-" + userId + "-files/" + relativePath;
+        return userStoragePrefix(userId) + relativePath;
     }
 
-    public static String extractParentDirectory(String relativeFilePath) {
-        int lastSlash = relativeFilePath.lastIndexOf('/');
-        if (lastSlash < 0) {
-            return "";
-        }
-        return relativeFilePath.substring(0, lastSlash + 1);
+    public static String userStoragePrefix(long userId) {
+        return "user-" + userId + "-files/";
+    }
+
+    public static ResourcePathParts splitDirectoryPath(String relativeDirectoryPath) {
+        String withoutTrailingSlash = relativeDirectoryPath.substring(0, relativeDirectoryPath.length() - 1);
+        return splitFilePath(withoutTrailingSlash);
     }
 
     public static ResourcePathParts splitFilePath(String relativeFilePath) {

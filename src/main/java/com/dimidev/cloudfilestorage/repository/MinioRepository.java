@@ -2,16 +2,22 @@ package com.dimidev.cloudfilestorage.repository;
 
 import com.dimidev.cloudfilestorage.config.MinioProperties;
 import com.dimidev.cloudfilestorage.exception.StorageException;
+import com.dimidev.cloudfilestorage.model.ListedResource;
 import com.dimidev.cloudfilestorage.model.StoredFile;
 import com.dimidev.cloudfilestorage.repository.api.StorageRepository;
-import io.minio.errors.ErrorResponseException;
+import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.Result;
 import io.minio.StatObjectArgs;
+import io.minio.errors.ErrorResponseException;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -58,10 +64,6 @@ public class MinioRepository implements StorageRepository {
 
     @Override
     public void createDirectory(String objectName) {
-        if (!objectName.endsWith("/")) {
-            throw new IllegalArgumentException("Имя директории должно заканчиваться на '/'");
-        }
-
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
@@ -73,5 +75,38 @@ public class MinioRepository implements StorageRepository {
         } catch (Exception e) {
             throw new StorageException("Не удалось создать директорию в MinIO.", e);
         }
+    }
+
+    @Override
+    public List<ListedResource> listObjects(String prefix) {
+        List<ListedResource> resources = new ArrayList<>();
+
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(properties.getBucket())
+                            .prefix(prefix)
+                            .delimiter("/")
+                            .recursive(false)
+                            .build()
+            );
+
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                if (item.objectName().equals(prefix)) {
+                    continue;
+                }
+
+                resources.add(new ListedResource(
+                        item.objectName(),
+                        item.size(),
+                        item.isDir() || item.objectName().endsWith("/")
+                ));
+            }
+        } catch (Exception e) {
+            throw new StorageException("Не удалось получить список объектов из MinIO.", e);
+        }
+
+        return resources;
     }
 }
