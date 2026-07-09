@@ -4,8 +4,7 @@ import com.dimidev.cloudfilestorage.dto.resource.ResourceResponse;
 import com.dimidev.cloudfilestorage.exception.BadRequestException;
 import com.dimidev.cloudfilestorage.exception.DuplicateResourceException;
 import com.dimidev.cloudfilestorage.exception.NotFoundException;
-import com.dimidev.cloudfilestorage.model.ListedResource;
-import com.dimidev.cloudfilestorage.model.ResourceType;
+import com.dimidev.cloudfilestorage.mapper.ResourceMapper;
 import com.dimidev.cloudfilestorage.repository.api.StorageRepository;
 import com.dimidev.cloudfilestorage.util.PathUtils;
 import com.dimidev.cloudfilestorage.util.PathUtils.ResourcePathParts;
@@ -19,6 +18,7 @@ import java.util.List;
 public class DirectoryService {
 
     private final StorageRepository storageRepository;
+    private final ResourceMapper resourceMapper;
 
     public List<ResourceResponse> list(Long userId, String path) {
         String directoryPath = PathUtils.normalizeDirectoryPath(path);
@@ -28,7 +28,7 @@ public class DirectoryService {
         String userPrefix = PathUtils.userStoragePrefix(userId);
 
         return storageRepository.listObjects(storagePrefix).stream()
-                .map(listedResource -> toResourceResponse(listedResource, userPrefix, directoryPath))
+                .map(listedResource -> resourceMapper.toResponse(listedResource, userPrefix, directoryPath))
                 .toList();
     }
 
@@ -51,27 +51,7 @@ public class DirectoryService {
         }
 
         storageRepository.createDirectory(storageKey);
-        return new ResourceResponse(parts.path(), parts.name(), null, ResourceType.DIRECTORY);
-    }
-
-    private ResourceResponse toResourceResponse(ListedResource listedResource,
-                                                String userPrefix,
-                                                String directoryPath) {
-        String itemName = listedResource.objectName().substring(userPrefix.length());
-
-        if (listedResource.directory()) {
-            String childRelative = itemName.substring(directoryPath.length());
-            String name = childRelative.substring(0, childRelative.length() - 1);
-            return new ResourceResponse(directoryPath, name, null, ResourceType.DIRECTORY);
-        }
-
-        ResourcePathParts parts = PathUtils.splitFilePath(itemName);
-        return new ResourceResponse(
-                parts.path(),
-                parts.name(),
-                listedResource.size(),
-                ResourceType.FILE
-        );
+        return resourceMapper.toDirectoryResponse(parts.path(), parts.name());
     }
 
     private void ensureDirectoryExists(Long userId, String directoryPath) {

@@ -20,6 +20,38 @@ import java.util.List;
 @Tag(name = "Resource", description = "Управление файлами")
 public interface ResourceApi {
 
+    @Operation(summary = "Получение информации о ресурсе")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Информация о ресурсе получена"),
+            @ApiResponse(responseCode = "400", description = "Некорректный запрос"),
+            @ApiResponse(responseCode = "401", description = "Неавторизован"),
+            @ApiResponse(responseCode = "404", description = "Ресурс не найден")
+    })
+    ResourceResponse get(@AuthenticationPrincipal CustomUserDetails userDetails,
+                         @RequestParam String path);
+
+    @Operation(summary = "Удаление ресурса")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Ресурс удалён"),
+            @ApiResponse(responseCode = "400", description = "Некорректный запрос"),
+            @ApiResponse(responseCode = "401", description = "Неавторизован"),
+            @ApiResponse(responseCode = "404", description = "Ресурс не найден")
+    })
+    ResponseEntity<Void> delete(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                @RequestParam String path);
+
+    @Operation(summary = "Переименование или перемещение ресурса")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ресурс перемещён"),
+            @ApiResponse(responseCode = "400", description = "Некорректный запрос"),
+            @ApiResponse(responseCode = "401", description = "Неавторизован"),
+            @ApiResponse(responseCode = "404", description = "Ресурс не найден"),
+            @ApiResponse(responseCode = "409", description = "Ресурс уже существует")
+    })
+    ResourceResponse move(@AuthenticationPrincipal CustomUserDetails userDetails,
+                          @RequestParam String from,
+                          @RequestParam String to);
+
     @Operation(
             summary = "Загрузка файлов и папок",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(

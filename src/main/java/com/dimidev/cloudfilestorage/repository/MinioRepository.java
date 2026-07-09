@@ -1,112 +1,69 @@
 package com.dimidev.cloudfilestorage.repository;
 
-import com.dimidev.cloudfilestorage.config.MinioProperties;
-import com.dimidev.cloudfilestorage.exception.StorageException;
+import com.dimidev.cloudfilestorage.minio.manager.MinioCopyManager;
+import com.dimidev.cloudfilestorage.minio.manager.MinioDeleteManager;
+import com.dimidev.cloudfilestorage.minio.manager.MinioQueryManager;
+import com.dimidev.cloudfilestorage.minio.manager.MinioUploadManager;
 import com.dimidev.cloudfilestorage.model.ListedResource;
 import com.dimidev.cloudfilestorage.model.StoredFile;
 import com.dimidev.cloudfilestorage.repository.api.StorageRepository;
-import io.minio.ListObjectsArgs;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
-import io.minio.Result;
-import io.minio.StatObjectArgs;
-import io.minio.errors.ErrorResponseException;
-import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class MinioRepository implements StorageRepository {
 
-    private final MinioClient minioClient;
-    private final MinioProperties properties;
+    private final MinioUploadManager uploadManager;
+    private final MinioQueryManager queryManager;
+    private final MinioDeleteManager deleteManager;
+    private final MinioCopyManager copyManager;
 
     @Override
     public void upload(StoredFile file) {
-        try {
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket(properties.getBucket())
-                            .object(file.objectName())
-                            .stream(file.inputStream(), file.size(), -1)
-                            .contentType(file.contentType())
-                            .build()
-            );
-        } catch (Exception e) {
-            throw new StorageException("Не удалось загрузить объект в MinIO.", e);
-        }
+        uploadManager.upload(file);
     }
 
     @Override
     public boolean exists(String objectName) {
-        try {
-            minioClient.statObject(
-                    StatObjectArgs.builder()
-                            .bucket(properties.getBucket())
-                            .object(objectName)
-                            .build()
-            );
-            return true;
-        } catch (ErrorResponseException e) {
-            if ("NoSuchKey".equals(e.errorResponse().code())) {
-                return false;
-            }
-            throw new StorageException("Не удалось проверить существование объекта в MinIO.", e);
-        } catch (Exception e) {
-            throw new StorageException("Не удалось проверить существование объекта в MinIO.", e);
-        }
+        return queryManager.exists(objectName);
+    }
+
+    @Override
+    public Optional<ListedResource> findObject(String objectName) {
+        return queryManager.findObject(objectName);
     }
 
     @Override
     public void createDirectory(String objectName) {
-        try {
-            minioClient.putObject(
-                    PutObjectArgs.builder()
-                            .bucket(properties.getBucket())
-                            .object(objectName)
-                            .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
-                            .build()
-            );
-        } catch (Exception e) {
-            throw new StorageException("Не удалось создать директорию в MinIO.", e);
-        }
+        uploadManager.createDirectory(objectName);
     }
 
     @Override
     public List<ListedResource> listObjects(String prefix) {
-        List<ListedResource> resources = new ArrayList<>();
+        return queryManager.listObjects(prefix);
+    }
 
-        try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(properties.getBucket())
-                            .prefix(prefix)
-                            .delimiter("/")
-                            .recursive(false)
-                            .build()
-            );
+    @Override
+    public List<ListedResource> listObjectsRecursive(String prefix) {
+        return queryManager.listObjectsRecursive(prefix);
+    }
 
-            for (Result<Item> result : results) {
-                Item item = result.get();
-                if (item.objectName().equals(prefix)) {
-                    continue;
-                }
+    @Override
+    public void deleteObject(String objectName) {
+        deleteManager.deleteObject(objectName);
+    }
 
-                resources.add(new ListedResource(
-                        item.objectName(),
-                        item.size(),
-                        item.isDir() || item.objectName().endsWith("/")
-                ));
-            }
-        } catch (Exception e) {
-            throw new StorageException("Не удалось получить список объектов из MinIO.", e);
-        }
+    @Override
+    public void deleteObjects(List<String> objectNames) {
+        deleteManager.deleteObjects(objectNames);
+    }
 
-        return resources;
+    @Override
+    public void copyObject(String sourceObjectName, String targetObjectName) {
+        copyManager.copyObject(sourceObjectName, targetObjectName);
     }
 }

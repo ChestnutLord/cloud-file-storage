@@ -5,7 +5,8 @@ import com.dimidev.cloudfilestorage.exception.BadRequestException;
 import com.dimidev.cloudfilestorage.exception.DuplicateResourceException;
 import com.dimidev.cloudfilestorage.exception.NotFoundException;
 import com.dimidev.cloudfilestorage.exception.StorageException;
-import com.dimidev.cloudfilestorage.model.ResourceType;
+import com.dimidev.cloudfilestorage.mapper.ResourceMapper;
+import com.dimidev.cloudfilestorage.model.ListedResource;
 import com.dimidev.cloudfilestorage.model.StoredFile;
 import com.dimidev.cloudfilestorage.repository.api.StorageRepository;
 import com.dimidev.cloudfilestorage.util.PathUtils;
@@ -25,6 +26,7 @@ import java.util.Set;
 public class ResourceService {
 
     private final StorageRepository storageRepository;
+    private final ResourceMapper resourceMapper;
 
     public List<ResourceResponse> upload(Long userId,
                                          String path,
@@ -44,6 +46,90 @@ public class ResourceService {
         }
 
         return uploadedResources;
+    }
+
+    public ResourceResponse get(Long userId, String path) {
+        String resourcePath = PathUtils.normalizeResourcePath(path);
+        String storageKey = PathUtils.toStorageKey(userId, resourcePath);
+
+        ListedResource resource = storageRepository.findObject(storageKey)
+                .orElseThrow(() -> new NotFoundException("Ресурс не найден"));
+
+        return resourceMapper.toResponse(resourcePath, resource);
+    }
+
+    public void delete(Long userId, String path) {
+        String resourcePath = PathUtils.normalizeResourcePath(path);
+        String storageKey = PathUtils.toStorageKey(userId, resourcePath);
+
+        if (!storageRepository.exists(storageKey)) {
+            throw new NotFoundException("Ресурс не найден");
+        }
+
+        if (PathUtils.isDirectoryPath(resourcePath)) {
+            List<String> objectNames = new ArrayList<>();
+            objectNames.add(storageKey);
+            storageRepository.listObjectsRecursive(storageKey).stream()
+                    .map(ListedResource::objectName)
+                    .forEach(objectNames::add);
+            storageRepository.deleteObjects(objectNames);
+            return;
+        }
+
+        storageRepository.deleteObject(storageKey);
+    }
+
+    public ResourceResponse move(Long userId, String from, String to) {
+        String sourcePath = PathUtils.normalizeResourcePath(from);
+        String targetPath = PathUtils.normalizeResourcePath(to);
+
+        if (PathUtils.isDirectoryPath(sourcePath) != PathUtils.isDirectoryPath(targetPath)) {
+            throw new BadRequestException("Невалидный путь");
+        }
+
+        String sourceKey = PathUtils.toStorageKey(userId, sourcePath);
+        String targetKey = PathUtils.toStorageKey(userId, targetPath);
+
+        if (!storageRepository.exists(sourceKey)) {
+            throw new NotFoundException("Ресурс не найден");
+        }
+
+        if (storageRepository.exists(targetKey)) {
+            throw new DuplicateResourceException("Ресурс уже существует");
+        }
+
+        String targetParent = PathUtils.isDirectoryPath(targetPath)
+                ? PathUtils.splitDirectoryPath(targetPath).path()
+                : PathUtils.splitFilePath(targetPath).path();
+        ensureTargetFolderExists(userId, targetParent);
+
+        if (PathUtils.isDirectoryPath(sourcePath)) {
+            moveDirectory(sourceKey, targetKey);
+        } else {
+            storageRepository.copyObject(sourceKey, targetKey);
+            storageRepository.deleteObject(sourceKey);
+        }
+
+        ListedResource moved = storageRepository.findObject(targetKey)
+                .orElseThrow(() -> new StorageException("Не удалось переместить ресурс"));
+        return resourceMapper.toResponse(targetPath, moved);
+    }
+
+    private void moveDirectory(String sourceKey, String targetKey) {
+        storageRepository.createDirectory(targetKey);
+
+        List<ListedResource> children = storageRepository.listObjectsRecursive(sourceKey);
+        for (ListedResource child : children) {
+            String childTargetKey = targetKey + child.objectName().substring(sourceKey.length());
+            storageRepository.copyObject(child.objectName(), childTargetKey);
+        }
+
+        List<String> objectNames = new ArrayList<>();
+        objectNames.add(sourceKey);
+        children.stream()
+                .map(ListedResource::objectName)
+                .forEach(objectNames::add);
+        storageRepository.deleteObjects(objectNames);
     }
 
     private ResourceResponse uploadFile(Long userId,
@@ -78,12 +164,7 @@ public class ResourceService {
         }
 
         ResourcePathParts parts = PathUtils.splitFilePath(relativeFilePath);
-        return new ResourceResponse(
-                parts.path(),
-                parts.name(),
-                file.getSize(),
-                ResourceType.FILE
-        );
+        return resourceMapper.toFileResponse(parts.path(), parts.name(), file.getSize());
     }
 
     private void ensureTargetFolderExists(Long userId, String targetFolder) {

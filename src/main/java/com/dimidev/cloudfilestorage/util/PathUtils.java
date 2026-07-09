@@ -38,6 +38,27 @@ public final class PathUtils {
         return normalized;
     }
 
+    public static String normalizeResourcePath(String path) {
+        if (path == null || path.isBlank()) {
+            throw new BadRequestException("Невалидный путь");
+        }
+
+        String normalized = normalizeSlashes(path.trim());
+        if (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+        if (normalized.isEmpty()) {
+            throw new BadRequestException("Невалидный путь");
+        }
+
+        validateRelativePath(normalized);
+        return normalized;
+    }
+
+    public static boolean isDirectoryPath(String path) {
+        return path.endsWith("/");
+    }
+
     public static void validateRelativePath(String path) {
         if (path.contains("..")) {
             throw new BadRequestException("Невалидный путь");
