@@ -6,6 +6,7 @@ import com.dimidev.cloudfilestorage.exception.DuplicateResourceException;
 import com.dimidev.cloudfilestorage.exception.NotFoundException;
 import com.dimidev.cloudfilestorage.exception.StorageException;
 import com.dimidev.cloudfilestorage.mapper.ResourceMapper;
+import com.dimidev.cloudfilestorage.model.DownloadedResource;
 import com.dimidev.cloudfilestorage.model.ListedResource;
 import com.dimidev.cloudfilestorage.model.StoredFile;
 import com.dimidev.cloudfilestorage.repository.api.StorageRepository;
@@ -16,10 +17,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -79,6 +84,33 @@ public class ResourceService {
         storageRepository.deleteObject(storageKey);
     }
 
+    public DownloadedResource download(Long userId, String path) {
+        String resourcePath = PathUtils.normalizeResourcePath(path);
+        String storageKey = PathUtils.toStorageKey(userId, resourcePath);
+
+        if (!storageRepository.exists(storageKey)) {
+            throw new NotFoundException("Ресурс не найден");
+        }
+
+        if (PathUtils.isDirectoryPath(resourcePath)) {
+            String directoryName = PathUtils.splitDirectoryPath(resourcePath).name();
+            return new DownloadedResource(
+                    directoryName + ".zip",
+                    outputStream -> zipDirectory(storageKey, outputStream)
+            );
+        }
+
+        String filename = PathUtils.splitFilePath(resourcePath).name();
+        return new DownloadedResource(
+                filename,
+                outputStream -> {
+                    try (InputStream objectStream = storageRepository.getObjectStream(storageKey)) {
+                        objectStream.transferTo(outputStream);
+                    }
+                }
+        );
+    }
+
     public ResourceResponse move(Long userId, String from, String to) {
         String sourcePath = PathUtils.normalizeResourcePath(from);
         String targetPath = PathUtils.normalizeResourcePath(to);
@@ -130,6 +162,33 @@ public class ResourceService {
                 .map(ListedResource::objectName)
                 .forEach(objectNames::add);
         storageRepository.deleteObjects(objectNames);
+    }
+
+    private void zipDirectory(String directoryKey, OutputStream responseStream) {
+        List<ListedResource> children = storageRepository.listObjectsRecursive(directoryKey);
+
+        try (ZipOutputStream zipStream = new ZipOutputStream(responseStream)) {
+            for (ListedResource child : children) {
+                String entryName = child.objectName().substring(directoryKey.length());
+                if (entryName.isEmpty()) {
+                    continue;
+                }
+
+                if (child.directory()) {
+                    zipStream.putNextEntry(new ZipEntry(entryName));
+                    zipStream.closeEntry();
+                    continue;
+                }
+
+                zipStream.putNextEntry(new ZipEntry(entryName));
+                try (InputStream objectStream = storageRepository.getObjectStream(child.objectName())) {
+                    objectStream.transferTo(zipStream);
+                }
+                zipStream.closeEntry();
+            }
+        } catch (IOException e) {
+            throw new StorageException("Не удалось создать zip-архив", e);
+        }
     }
 
     private ResourceResponse uploadFile(Long userId,

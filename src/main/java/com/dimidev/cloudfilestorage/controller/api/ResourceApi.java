@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
 
@@ -39,6 +40,17 @@ public interface ResourceApi {
     })
     ResponseEntity<Void> delete(@AuthenticationPrincipal CustomUserDetails userDetails,
                                 @RequestParam String path);
+
+    @Operation(summary = "Скачивание ресурса")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ресурс скачан",
+                    content = @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE)),
+            @ApiResponse(responseCode = "400", description = "Некорректный запрос"),
+            @ApiResponse(responseCode = "401", description = "Неавторизован"),
+            @ApiResponse(responseCode = "404", description = "Ресурс не найден")
+    })
+    ResponseEntity<StreamingResponseBody> download(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                                   @RequestParam String path);
 
     @Operation(summary = "Переименование или перемещение ресурса")
     @ApiResponses({

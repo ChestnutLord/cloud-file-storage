@@ -10,6 +10,7 @@ import com.dimidev.cloudfilestorage.repository.api.StorageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +36,11 @@ public class MinioRepository implements StorageRepository {
     @Override
     public Optional<ListedResource> findObject(String objectName) {
         return queryManager.findObject(objectName);
+    }
+
+    @Override
+    public InputStream getObjectStream(String objectName) {
+        return queryManager.getObjectStream(objectName);
     }
 
     @Override

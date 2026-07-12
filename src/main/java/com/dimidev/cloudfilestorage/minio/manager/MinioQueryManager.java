@@ -3,6 +3,7 @@ package com.dimidev.cloudfilestorage.minio.manager;
 import com.dimidev.cloudfilestorage.config.MinioProperties;
 import com.dimidev.cloudfilestorage.exception.StorageException;
 import com.dimidev.cloudfilestorage.model.ListedResource;
+import io.minio.GetObjectArgs;
 import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
 import io.minio.Result;
@@ -13,6 +14,7 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +51,24 @@ public class MinioQueryManager {
 
     public boolean exists(String objectName) {
         return findObject(objectName).isPresent();
+    }
+
+    public InputStream getObjectStream(String objectName) {
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(properties.getBucket())
+                            .object(objectName)
+                            .build()
+            );
+        } catch (ErrorResponseException e) {
+            if ("NoSuchKey".equals(e.errorResponse().code())) {
+                throw new StorageException("Объект не найден в MinIO.", e);
+            }
+            throw new StorageException("Не удалось скачать объект из MinIO.", e);
+        } catch (Exception e) {
+            throw new StorageException("Не удалось скачать объект из MinIO.", e);
+        }
     }
 
     public List<ListedResource> listObjects(String prefix) {

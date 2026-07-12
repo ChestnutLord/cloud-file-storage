@@ -4,6 +4,7 @@ import com.dimidev.cloudfilestorage.dto.common.ErrorResponse;
 import com.dimidev.cloudfilestorage.exception.ApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -34,6 +35,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(e.getStatusCode())
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(new ErrorResponse(e.getReason()));
     }
 
@@ -48,6 +50,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(new ErrorResponse(message));
     }
 
@@ -57,6 +60,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(new ErrorResponse("Неверное имя пользователя или пароль"));
     }
 
@@ -66,6 +70,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(new ErrorResponse("Неизвестная ошибка"));
     }
 }
