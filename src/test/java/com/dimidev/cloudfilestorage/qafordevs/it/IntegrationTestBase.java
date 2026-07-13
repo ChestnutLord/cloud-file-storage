@@ -7,7 +7,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
@@ -20,8 +22,13 @@ public abstract class IntegrationTestBase {
     private static final PostgreSQLContainer<?> postgres =
             new PostgreSQLContainer<>("postgres:15-alpine");
 
+    private static final GenericContainer<?> redis =
+            new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
+                    .withExposedPorts(6379);
+
     static {
         postgres.start();
+        redis.start();
     }
 
     @DynamicPropertySource
@@ -30,7 +37,13 @@ public abstract class IntegrationTestBase {
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
 
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379).toString());
+
         registry.add("minio.bucket", () -> "test-bucket");
         registry.add("minio.internalUrl", () -> "http://localhost:9000");
+        registry.add("minio.publicUrl", () -> "http://localhost:9000");
+        registry.add("minio.accessKey", () -> "minioadmin");
+        registry.add("minio.secretKey", () -> "minioadmin");
     }
 }

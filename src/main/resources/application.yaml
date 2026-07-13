@@ -11,13 +11,23 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  session:
+    timeout: 30m
+    data:
+      redis:
+        namespace: cloud-file-storage:session
+
 server:
   port: 8080
-
-#    data:
-#      redis:
-#        host: ${REDIS_HOST}
-#        port: ${REDIS_PORT}
+  servlet:
+    session:
+      cookie:
+        name: JSESSIONID
 
 minio:
   bucket: ${MINIO_BUCKET}

@@ -17,6 +17,33 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: cloud-file-storage_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: cloud-file-storage_redis_insight
+    restart: unless-stopped
+    ports:
+      - "${REDIS_INSIGHT_PORT:-5540}:5540"
+    volumes:
+      - redis_insight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+
   app:
     build:
       context: .
@@ -27,12 +54,16 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     env_file:
       - .env
     environment:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     ports:
       - "8080:8080"
       - "5005:5005"
@@ -56,33 +87,8 @@ services:
       timeout: 5s
       retries: 5
 
-#  redis:
-#    image: redis:7-alpine
-#    container_name: marketplace_redis
-#    restart: unless-stopped
-#    ports:
-#      - "${REDIS_PORT}:6379"
-#    volumes:
-#      - redis_data:/data
-#    command: redis-server --appendonly yes
-#    healthcheck:
-#      test: [ "CMD", "redis-cli", "ping" ]
-#      interval: 5s
-#      timeout: 3s
-#      retries: 5
-#
-#  redis-insight:
-#    image: redis/redisinsight:latest
-#    container_name: marketplace_redis_insight
-#    restart: unless-stopped
-#    ports:
-#      - "${REDIS_INSIGHT_PORT}:5540"
-#    volumes:
-#      - redis_insight_data:/data
-#    depends_on:
-#      redis:
-#        condition: service_healthy
-
 volumes:
   postgres_data:
   minio-data:
+  redis_data:
+  redis_insight_data:

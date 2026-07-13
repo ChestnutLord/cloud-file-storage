@@ -54,8 +54,6 @@ public class SecurityConfig {
                 )
                 .securityContext(securityContext ->
                         securityContext.securityContextRepository(securityContextRepository()))
-                .sessionManagement(sessionManagement ->
-                        sessionManagement.maximumSessions(1))
                 .build();
     }
 
