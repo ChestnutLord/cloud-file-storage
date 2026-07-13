@@ -6,13 +6,14 @@ import com.dimidev.cloudfilestorage.exception.DuplicateResourceException;
 import com.dimidev.cloudfilestorage.exception.NotFoundException;
 import com.dimidev.cloudfilestorage.exception.StorageException;
 import com.dimidev.cloudfilestorage.mapper.ResourceMapper;
-import com.dimidev.cloudfilestorage.model.DownloadedResource;
+import com.dimidev.cloudfilestorage.dto.resource.DownloadedResource;
 import com.dimidev.cloudfilestorage.model.ListedResource;
 import com.dimidev.cloudfilestorage.model.StoredFile;
 import com.dimidev.cloudfilestorage.repository.api.StorageRepository;
 import com.dimidev.cloudfilestorage.util.PathUtils;
 import com.dimidev.cloudfilestorage.util.PathUtils.ResourcePathParts;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +27,7 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ResourceService {
@@ -50,6 +52,8 @@ public class ResourceService {
             uploadedResources.add(uploadFile(userId, targetFolder, file, ensuredDirectories));
         }
 
+        log.info("Файлы загружены: userId={}, path={}, count={}",
+                userId, targetFolder, uploadedResources.size());
         return uploadedResources;
     }
 
@@ -99,10 +103,12 @@ public class ResourceService {
                     .map(ListedResource::objectName)
                     .forEach(objectNames::add);
             storageRepository.deleteObjects(objectNames);
+            log.info("Папка удалена: userId={}, path={}", userId, resourcePath);
             return;
         }
 
         storageRepository.deleteObject(storageKey);
+        log.info("Файл удалён: userId={}, path={}", userId, resourcePath);
     }
 
     public DownloadedResource download(Long userId, String path) {
@@ -115,6 +121,7 @@ public class ResourceService {
 
         if (PathUtils.isDirectoryPath(resourcePath)) {
             String directoryName = PathUtils.splitDirectoryPath(resourcePath).name();
+            log.info("Скачивание папки: userId={}, path={}", userId, resourcePath);
             return new DownloadedResource(
                     directoryName + ".zip",
                     outputStream -> zipDirectory(storageKey, outputStream)
@@ -122,6 +129,7 @@ public class ResourceService {
         }
 
         String filename = PathUtils.splitFilePath(resourcePath).name();
+        log.info("Скачивание файла: userId={}, path={}", userId, resourcePath);
         return new DownloadedResource(
                 filename,
                 outputStream -> {
@@ -165,6 +173,7 @@ public class ResourceService {
 
         ListedResource moved = storageRepository.findObject(targetKey)
                 .orElseThrow(() -> new StorageException("Не удалось переместить ресурс"));
+        log.info("Ресурс перемещён: userId={}, from={}, to={}", userId, sourcePath, targetPath);
         return resourceMapper.toResponse(targetPath, moved);
     }
 

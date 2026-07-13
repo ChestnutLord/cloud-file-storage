@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @Tag(name = "User", description = "Информация о текущем пользователе")
-public interface UserApi {
+public interface UserController {
 
     @Operation(summary = "Получение текущего пользователя")
     @ApiResponses({

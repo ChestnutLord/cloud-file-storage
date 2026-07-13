@@ -63,22 +63,24 @@ cd cloud-file-storage
 cp .env.example .env
 ```
 
-Собрать приложение:
-
-```bash
-./gradlew clean bootJar
-```
-
-Запустить инфраструктуру и приложение:
+Собрать образ и поднять всё одной командой:
 
 ```bash
 docker compose up -d --build
 ```
 
+`Dockerfile` — multi-stage: jar собирается **внутри** образа (`./gradlew bootJar`), на хосте вручную собирать не нужно. Первая сборка дольше (скачивание Gradle-зависимостей в Docker).
+
 Проверить UI и Swagger:
 
 - Frontend: http://localhost:8080/
 - Swagger UI: http://localhost:8080/swagger-ui/index.html
+
+Остановить:
+
+```bash
+docker compose down
+```
 
 ## Main endpoints
 
@@ -156,16 +158,45 @@ cloud-file-storage/
 ├── src/main/resources/static/      # React frontend
 ├── src/main/resources/db/          # Liquibase migrations
 ├── docker-compose.yaml
-├── Dockerfile
+├── Dockerfile                      # multi-stage: build + runtime
+├── .dockerignore
 └── .env.example
+```
+
+### Запуск через Docker (рекомендуется)
+
+1. `.env` из `.env.example`
+2. `docker compose up -d --build` — Postgres, Redis, RedisInsight, MinIO и app
+3. UI: http://localhost:8080/
+
+Пересборка после изменений кода:
+
+```bash
+docker compose up -d --build app
+```
+
+### Локальный запуск app (IDE / Gradle)
+
+Инфраструктуру всё равно удобно держать в Docker:
+
+```bash
+docker compose up -d postgres redis minio redis-insight
+```
+
+В `.env` / окружении для локального app: `REDIS_HOST=localhost` (не `redis`).  
+Datasource URL — на `localhost:5432`, MinIO — как в `.env.example`.
+
+```bash
+./gradlew bootRun
+# или ./gradlew bootJar && java -jar build/libs/*.jar
 ```
 
 ### Конфигурация
 
 Переменные окружения задаются в `.env`. См. `.env.example`.
 
-Для Docker-сети app получает `REDIS_HOST=redis` из `docker-compose.yaml`.  
-Если запускаете приложение локально (вне контейнера), а Redis в Docker — используйте `REDIS_HOST=localhost`.
+В Docker Compose сервис `app` получает `REDIS_HOST=redis` (имя сервиса в сети Compose).  
+Локально вне контейнера — `REDIS_HOST=localhost`.
 
 ### Тесты
 

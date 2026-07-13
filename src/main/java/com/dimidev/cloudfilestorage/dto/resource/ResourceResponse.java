@@ -9,4 +9,12 @@ public record ResourceResponse(
         String name,
         Long size,
         ResourceType type) {
+
+    public static ResourceResponse file(String path, String name, long size) {
+        return new ResourceResponse(path, name, size, ResourceType.FILE);
+    }
+
+    public static ResourceResponse directory(String path, String name) {
+        return new ResourceResponse(path, name, null, ResourceType.DIRECTORY);
+    }
 }

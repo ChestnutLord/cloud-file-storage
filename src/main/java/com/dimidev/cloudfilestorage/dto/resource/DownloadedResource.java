@@ -1,4 +1,4 @@
-package com.dimidev.cloudfilestorage.model;
+package com.dimidev.cloudfilestorage.dto.resource;
 
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 

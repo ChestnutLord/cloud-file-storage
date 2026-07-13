@@ -9,10 +9,12 @@ import io.minio.Result;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MinioDeleteManager {
@@ -29,6 +31,7 @@ public class MinioDeleteManager {
                             .build()
             );
         } catch (Exception e) {
+            log.error("Ошибка удаления объекта из MinIO: objectName={}", objectName, e);
             throw new StorageException("Не удалось удалить объект из MinIO.", e);
         }
     }
@@ -52,6 +55,7 @@ public class MinioDeleteManager {
 
             for (Result<DeleteError> result : results) {
                 DeleteError error = result.get();
+                log.error("Ошибка удаления объекта из MinIO: objectName={}", error.objectName());
                 throw new StorageException(
                         "Не удалось удалить объект из MinIO: " + error.objectName()
                 );
@@ -59,6 +63,7 @@ public class MinioDeleteManager {
         } catch (StorageException e) {
             throw e;
         } catch (Exception e) {
+            log.error("Ошибка массового удаления объектов из MinIO: count={}", objectNames.size(), e);
             throw new StorageException("Не удалось удалить объекты из MinIO.", e);
         }
     }

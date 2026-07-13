@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 @Tag(name = "Directory", description = "Управление папками")
-public interface DirectoryApi {
+public interface DirectoryController {
 
     @Operation(summary = "Получение содержимого папки")
     @ApiResponses({
@@ -34,5 +35,7 @@ public interface DirectoryApi {
             @ApiResponse(responseCode = "409", description = "Папка уже существует")
     })
     ResponseEntity<ResourceResponse> create(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                            @RequestParam String path);
+                                            @RequestParam
+                                            @NotBlank(message = "Путь обязателен")
+                                            String path);
 }

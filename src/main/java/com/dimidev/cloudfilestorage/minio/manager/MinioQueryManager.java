@@ -12,6 +12,7 @@ import io.minio.StatObjectResponse;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MinioQueryManager {
@@ -43,8 +45,10 @@ public class MinioQueryManager {
             if ("NoSuchKey".equals(e.errorResponse().code())) {
                 return Optional.empty();
             }
+            log.error("Ошибка получения объекта из MinIO: objectName={}", objectName, e);
             throw new StorageException("Не удалось получить объект из MinIO.", e);
         } catch (Exception e) {
+            log.error("Ошибка получения объекта из MinIO: objectName={}", objectName, e);
             throw new StorageException("Не удалось получить объект из MinIO.", e);
         }
     }
@@ -63,10 +67,13 @@ public class MinioQueryManager {
             );
         } catch (ErrorResponseException e) {
             if ("NoSuchKey".equals(e.errorResponse().code())) {
+                log.error("Объект не найден в MinIO: objectName={}", objectName, e);
                 throw new StorageException("Объект не найден в MinIO.", e);
             }
+            log.error("Ошибка скачивания объекта из MinIO: objectName={}", objectName, e);
             throw new StorageException("Не удалось скачать объект из MinIO.", e);
         } catch (Exception e) {
+            log.error("Ошибка скачивания объекта из MinIO: objectName={}", objectName, e);
             throw new StorageException("Не удалось скачать объект из MinIO.", e);
         }
     }
@@ -105,6 +112,7 @@ public class MinioQueryManager {
                 ));
             }
         } catch (Exception e) {
+            log.error("Ошибка получения списка объектов из MinIO: prefix={}", prefix, e);
             throw new StorageException("Не удалось получить список объектов из MinIO.", e);
         }
 

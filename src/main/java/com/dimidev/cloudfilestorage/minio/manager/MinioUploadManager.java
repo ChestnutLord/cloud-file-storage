@@ -6,10 +6,12 @@ import com.dimidev.cloudfilestorage.model.StoredFile;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MinioUploadManager {
@@ -28,6 +30,7 @@ public class MinioUploadManager {
                             .build()
             );
         } catch (Exception e) {
+            log.error("Ошибка загрузки объекта в MinIO: objectName={}", file.objectName(), e);
             throw new StorageException("Не удалось загрузить объект в MinIO.", e);
         }
     }
@@ -42,6 +45,7 @@ public class MinioUploadManager {
                             .build()
             );
         } catch (Exception e) {
+            log.error("Ошибка создания директории в MinIO: objectName={}", objectName, e);
             throw new StorageException("Не удалось создать директорию в MinIO.", e);
         }
     }

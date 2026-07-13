@@ -6,8 +6,10 @@ import io.minio.CopyObjectArgs;
 import io.minio.CopySource;
 import io.minio.MinioClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class MinioCopyManager {
@@ -30,6 +32,8 @@ public class MinioCopyManager {
                             .build()
             );
         } catch (Exception e) {
+            log.error("Ошибка копирования объекта в MinIO: from={}, to={}",
+                    sourceObjectName, targetObjectName, e);
             throw new StorageException("Не удалось скопировать объект в MinIO.", e);
         }
     }

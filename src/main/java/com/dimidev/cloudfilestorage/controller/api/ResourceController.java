@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,7 +20,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.util.List;
 
 @Tag(name = "Resource", description = "Управление файлами")
-public interface ResourceApi {
+public interface ResourceController {
 
     @Operation(summary = "Получение информации о ресурсе")
     @ApiResponses({
@@ -29,7 +30,9 @@ public interface ResourceApi {
             @ApiResponse(responseCode = "404", description = "Ресурс не найден")
     })
     ResourceResponse get(@AuthenticationPrincipal CustomUserDetails userDetails,
-                         @RequestParam String path);
+                         @RequestParam
+                         @NotBlank(message = "Путь обязателен")
+                         String path);
 
     @Operation(summary = "Удаление ресурса")
     @ApiResponses({
@@ -39,7 +42,9 @@ public interface ResourceApi {
             @ApiResponse(responseCode = "404", description = "Ресурс не найден")
     })
     ResponseEntity<Void> delete(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                @RequestParam String path);
+                                @RequestParam
+                                @NotBlank(message = "Путь обязателен")
+                                String path);
 
     @Operation(summary = "Скачивание ресурса")
     @ApiResponses({
@@ -50,7 +55,9 @@ public interface ResourceApi {
             @ApiResponse(responseCode = "404", description = "Ресурс не найден")
     })
     ResponseEntity<StreamingResponseBody> download(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                                   @RequestParam String path);
+                                                   @RequestParam
+                                                   @NotBlank(message = "Путь обязателен")
+                                                   String path);
 
     @Operation(summary = "Поиск ресурсов")
     @ApiResponses({
@@ -59,7 +66,9 @@ public interface ResourceApi {
             @ApiResponse(responseCode = "401", description = "Неавторизован")
     })
     List<ResourceResponse> search(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                  @RequestParam String query);
+                                  @RequestParam
+                                  @NotBlank(message = "Поисковый запрос обязателен")
+                                  String query);
 
     @Operation(summary = "Переименование или перемещение ресурса")
     @ApiResponses({
@@ -70,8 +79,12 @@ public interface ResourceApi {
             @ApiResponse(responseCode = "409", description = "Ресурс уже существует")
     })
     ResourceResponse move(@AuthenticationPrincipal CustomUserDetails userDetails,
-                          @RequestParam String from,
-                          @RequestParam String to);
+                          @RequestParam
+                          @NotBlank(message = "Параметр from обязателен")
+                          String from,
+                          @RequestParam
+                          @NotBlank(message = "Параметр to обязателен")
+                          String to);
 
     @Operation(
             summary = "Загрузка файлов и папок",

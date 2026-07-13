@@ -7,6 +7,7 @@ import com.dimidev.cloudfilestorage.security.CustomUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,6 +18,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -38,6 +40,7 @@ public class AuthService {
         securityContext.setAuthentication(authentication);
         securityContextHolderStrategy.setContext(securityContext);
         securityContextRepository.saveContext(securityContext, request, response);
+        log.info("Пользователь зарегистрирован: username={}", user.username());
         return user;
     }
 
@@ -52,6 +55,7 @@ public class AuthService {
         securityContextHolderStrategy.setContext(securityContext);
         securityContextRepository.saveContext(securityContext, request, response);
         CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+        log.info("Пользователь вошёл в систему: username={}", principal.getUsername());
         return new UserReadDto(principal.getUsername()); // todo null pointer
     }
 }

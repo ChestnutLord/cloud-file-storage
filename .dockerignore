@@ -1,0 +1,13 @@
+.git
+.idea
+.vscode
+*.iml
+.env
+build
+.gradle
+out
+bin
+*.md
+.cursor
+agent-transcripts
+**/__pycache__

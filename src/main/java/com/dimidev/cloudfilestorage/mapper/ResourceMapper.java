@@ -2,7 +2,6 @@ package com.dimidev.cloudfilestorage.mapper;
 
 import com.dimidev.cloudfilestorage.dto.resource.ResourceResponse;
 import com.dimidev.cloudfilestorage.model.ListedResource;
-import com.dimidev.cloudfilestorage.model.ResourceType;
 import com.dimidev.cloudfilestorage.util.PathUtils;
 import com.dimidev.cloudfilestorage.util.PathUtils.ResourcePathParts;
 import org.springframework.stereotype.Component;
@@ -35,11 +34,11 @@ public class ResourceMapper {
         return toFileResponse(parts.path(), parts.name(), listedResource.size());
     }
 
-    public ResourceResponse toFileResponse(String path, String name, Long size) {
-        return new ResourceResponse(path, name, size, ResourceType.FILE);
+    public ResourceResponse toFileResponse(String path, String name, long size) {
+        return ResourceResponse.file(path, name, size);
     }
 
     public ResourceResponse toDirectoryResponse(String path, String name) {
-        return new ResourceResponse(path, name, null, ResourceType.DIRECTORY);
+        return ResourceResponse.directory(path, name);
     }
 }
