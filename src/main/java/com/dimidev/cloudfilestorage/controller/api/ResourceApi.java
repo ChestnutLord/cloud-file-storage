@@ -88,7 +88,7 @@ public interface ResourceApi {
     ResponseEntity<List<ResourceResponse>> upload(@AuthenticationPrincipal CustomUserDetails userDetails,
                                                   @RequestParam(defaultValue = "") String path,
                                                   @Parameter(description = "Файлы для загрузки")
-                                                  @RequestPart("files")
+                                                  @RequestPart("object")
                                                   List<MultipartFile> files
     );
 }

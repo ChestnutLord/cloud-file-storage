@@ -27,7 +27,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/resource")
+@RequestMapping("/api/resource")
 public class ResourceController implements ResourceApi {
 
     private final ResourceService resourceService;
@@ -82,7 +82,7 @@ public class ResourceController implements ResourceApi {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<ResourceResponse>> upload(@AuthenticationPrincipal CustomUserDetails userDetails,
                                                          @RequestParam(value = "path", defaultValue = "") String path,
-                                                         @RequestPart("files") List<MultipartFile> files) {
+                                                         @RequestPart("object") List<MultipartFile> files) {
         List<ResourceResponse> resources =
                 resourceService.upload(userDetails.getId(), path, files);
 

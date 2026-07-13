@@ -1,6 +1,7 @@
 package com.dimidev.cloudfilestorage.config;
 
-import jakarta.servlet.http.HttpServletResponse;
+import com.dimidev.cloudfilestorage.security.JsonAuthenticationEntryPoint;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,40 +14,48 @@ import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JsonAuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(Customizer.withDefaults())     //ToDo исправить по добавлении фронтенда
-                .csrf(csrf -> csrf.disable()) //ToDo включить по добавлении фронтенда
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/auth/**")
-                                .permitAll()
-                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
-                                .permitAll()
-                                .anyRequest()
-                                .authenticated()
+                        auth.requestMatchers(
+                                        "/",
+                                        "/index.html",
+                                        "/config.js",
+                                        "/assets/**",
+                                        "/favicon.ico"
+                                ).permitAll()
+                                .requestMatchers(
+                                        "/api/auth/sign-up",
+                                        "/api/auth/sign-in"
+                                ).permitAll()
+                                .requestMatchers(
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui/**",
+                                        "/swagger-ui.html"
+                                ).permitAll()
+                                .requestMatchers("/api/**").authenticated()
+                                .anyRequest().permitAll()
                 )
-                .securityContext((securityContext) -> securityContext.securityContextRepository(securityContextRepository()))
-                .sessionManagement(
-                        sessionManagement -> sessionManagement
-                                .maximumSessions(1)
-                                .expiredUrl("/api/auth/sign-in")
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(authenticationEntryPoint)
                 )
-                .logout(logout -> logout
-                        .logoutUrl("/auth/sign-out")
-                        .deleteCookies("JSESSIONID")
-                        .invalidateHttpSession(true)
-                        .clearAuthentication(true)
-                        .logoutSuccessUrl("/auth/sign-in")
-                        .logoutSuccessHandler(logoutSuccessHandler()))
+                .securityContext(securityContext ->
+                        securityContext.securityContextRepository(securityContextRepository()))
+                .sessionManagement(sessionManagement ->
+                        sessionManagement.maximumSessions(1))
                 .build();
     }
 
@@ -56,18 +65,13 @@ public class SecurityConfig {
     }
 
     @Bean
-    public LogoutSuccessHandler logoutSuccessHandler() {
-        return (request, response,
-                authentication) -> response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-    }
-
-    @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
+            throws Exception {
         return configuration.getAuthenticationManager();
     }
 

@@ -33,10 +33,10 @@ public class itAuthControllerTests extends IntegrationTestBase {
     @DisplayName("Успешная регистрация нового пользователя возвращает 201 Created")
     void givenValidDto_whenRegister_thenSuccessResponseAndUserSaved() throws Exception {
         // given
-        UserUpsertDto validDto = new UserUpsertDto("dmitry", "password", "password");
+        UserUpsertDto validDto = new UserUpsertDto("dmitry", "password");
 
         // when
-        ResultActions result = mockMvc.perform(post("/auth/sign-up")
+        ResultActions result = mockMvc.perform(post("/api/auth/sign-up")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validDto)));
 
@@ -53,10 +53,10 @@ public class itAuthControllerTests extends IntegrationTestBase {
     @DisplayName("Ошибка валидации: пустой username возвращает 400 Bad Request")
     void givenEmptyUsername_whenRegister_thenReturnsBadRequest() throws Exception {
         // given
-        UserUpsertDto invalidDto = new UserUpsertDto("", "password", "password");
+        UserUpsertDto invalidDto = new UserUpsertDto("", "password");
 
         // when
-        ResultActions result = mockMvc.perform(post("/auth/sign-up")
+        ResultActions result = mockMvc.perform(post("/api/auth/sign-up")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidDto)));
 
@@ -70,10 +70,10 @@ public class itAuthControllerTests extends IntegrationTestBase {
     @DisplayName("Ошибка валидации: короткий username возвращает 400 Bad Request")
     void givenSmallUsername_whenRegister_thenReturnsBadRequest() throws Exception {
         // given
-        UserUpsertDto invalidDto = new UserUpsertDto("a", "password", "password");
+        UserUpsertDto invalidDto = new UserUpsertDto("abcd", "password");
 
         // when
-        ResultActions result = mockMvc.perform(post("/auth/sign-up")
+        ResultActions result = mockMvc.perform(post("/api/auth/sign-up")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidDto)));
 
@@ -87,16 +87,16 @@ public class itAuthControllerTests extends IntegrationTestBase {
     @DisplayName("Бизнес-ошибка: регистрация с уже существующим username возвращает ошибку 409")
     void givenExistingUsername_whenRegister_thenReturnsError() throws Exception {
         // given
-        UserUpsertDto validDto = new UserUpsertDto("dmitry", "password", "password");
+        UserUpsertDto validDto = new UserUpsertDto("dmitry", "password");
 
-        mockMvc.perform(post("/auth/sign-up")
+        mockMvc.perform(post("/api/auth/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validDto)))
                 .andExpect(status().isCreated());
         assertThat(userRepository.findByUsername("dmitry")).isPresent();
 
         // when
-        ResultActions result = mockMvc.perform(post("/auth/sign-up")
+        ResultActions result = mockMvc.perform(post("/api/auth/sign-up")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validDto)));
 
@@ -110,12 +110,12 @@ public class itAuthControllerTests extends IntegrationTestBase {
     @DisplayName("Успешный логин ползователя")
     void givenValidDto_whenLogin_thenSuccessResponse() throws Exception {
         // given
-        UserUpsertDto validDto = new UserUpsertDto("dmitry", "password", "password");
+        UserUpsertDto validDto = new UserUpsertDto("dmitry", "password");
         userService.create(validDto);
         assertThat(userRepository.findByUsername("dmitry")).isPresent();
 
         //when
-        ResultActions result = mockMvc.perform(post("/auth/sign-in")
+        ResultActions result = mockMvc.perform(post("/api/auth/sign-in")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(validDto)));
 
@@ -131,7 +131,7 @@ public class itAuthControllerTests extends IntegrationTestBase {
         UserAuthDto invalidDto = new UserAuthDto("", "password");
 
         // when
-        ResultActions result = mockMvc.perform(post("/auth/sign-in")
+        ResultActions result = mockMvc.perform(post("/api/auth/sign-in")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidDto)));
 
@@ -148,7 +148,7 @@ public class itAuthControllerTests extends IntegrationTestBase {
         UserAuthDto invalidDto = new UserAuthDto("unknown_user", "password");
 
         //when
-        ResultActions result = mockMvc.perform(post("/auth/sign-in")
+        ResultActions result = mockMvc.perform(post("/api/auth/sign-in")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidDto)));
 
@@ -162,8 +162,8 @@ public class itAuthControllerTests extends IntegrationTestBase {
     @DisplayName("Бизнес-ошибка: логин с неверным паролем возвращает 401 Unauthorized")
     void givenInvalidPassword_whenLogin_thenReturnsError() throws Exception {
         // given
-        UserUpsertDto validRegistrationDto = new UserUpsertDto("dmitry", "password", "password");
-        mockMvc.perform(post("/auth/sign-up")
+        UserUpsertDto validRegistrationDto = new UserUpsertDto("dmitry", "password");
+        mockMvc.perform(post("/api/auth/sign-up")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRegistrationDto)))
                 .andExpect(status().isCreated());
@@ -173,7 +173,7 @@ public class itAuthControllerTests extends IntegrationTestBase {
         UserAuthDto invalidPasswordLoginDto = new UserAuthDto("dmitry", "wrong_password");
 
         // when
-        ResultActions result = mockMvc.perform(post("/auth/sign-in")
+        ResultActions result = mockMvc.perform(post("/api/auth/sign-in")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidPasswordLoginDto)));
 
