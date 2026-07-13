@@ -64,6 +64,13 @@ public class ResourceController implements ResourceApi {
     }
 
     @Override
+    @GetMapping("/search")
+    public List<ResourceResponse> search(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                         @RequestParam("query") String query) {
+        return resourceService.search(userDetails.getId(), query);
+    }
+
+    @Override
     @PostMapping("/move")
     public ResourceResponse move(@AuthenticationPrincipal CustomUserDetails userDetails,
                                  @RequestParam("from") String from,

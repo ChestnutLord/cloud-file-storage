@@ -52,6 +52,15 @@ public interface ResourceApi {
     ResponseEntity<StreamingResponseBody> download(@AuthenticationPrincipal CustomUserDetails userDetails,
                                                    @RequestParam String path);
 
+    @Operation(summary = "Поиск ресурсов")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Поиск выполнен"),
+            @ApiResponse(responseCode = "400", description = "Некорректный запрос"),
+            @ApiResponse(responseCode = "401", description = "Неавторизован")
+    })
+    List<ResourceResponse> search(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                  @RequestParam String query);
+
     @Operation(summary = "Переименование или перемещение ресурса")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Ресурс перемещён"),

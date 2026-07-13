@@ -63,6 +63,27 @@ public class ResourceService {
         return resourceMapper.toResponse(resourcePath, resource);
     }
 
+    public List<ResourceResponse> search(Long userId, String query) {
+        if (query == null || query.isBlank()) {
+            throw new BadRequestException("Невалидный поисковый запрос");
+        }
+
+        String normalizedQuery = query.trim().toLowerCase();
+        String userPrefix = PathUtils.userStoragePrefix(userId);
+
+        return storageRepository.listObjectsRecursive(userPrefix).stream()
+                .filter(listedResource -> {
+                    String resourcePath = listedResource.objectName().substring(userPrefix.length());
+                    return !resourcePath.isEmpty()
+                            && resourceName(resourcePath).toLowerCase().contains(normalizedQuery);
+                })
+                .map(listedResource -> {
+                    String resourcePath = listedResource.objectName().substring(userPrefix.length());
+                    return resourceMapper.toResponse(resourcePath, listedResource);
+                })
+                .toList();
+    }
+
     public void delete(Long userId, String path) {
         String resourcePath = PathUtils.normalizeResourcePath(path);
         String storageKey = PathUtils.toStorageKey(userId, resourcePath);
@@ -266,5 +287,12 @@ public class ResourceService {
 
             ensuredDirectories.add(relativeDirectory);
         }
+    }
+
+    private String resourceName(String resourcePath) {
+        if (PathUtils.isDirectoryPath(resourcePath)) {
+            return PathUtils.splitDirectoryPath(resourcePath).name();
+        }
+        return PathUtils.splitFilePath(resourcePath).name();
     }
 }
