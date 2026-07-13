@@ -28,6 +28,6 @@ public class UserService {
         }
         User user = userMapper.toModel(dto);
         user.setPasswordHash(passwordEncoder.encode(dto.password()));
-        return userMapper.toDto(userRepository.save(user)); //ToDo проверить что дата выставляется когда ткаим образом возвращаешь
+        return userMapper.toDto(userRepository.save(user));
     }
 }

@@ -56,6 +56,6 @@ public class AuthService {
         securityContextRepository.saveContext(securityContext, request, response);
         CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
         log.info("Пользователь вошёл в систему: username={}", principal.getUsername());
-        return new UserReadDto(principal.getUsername()); // todo null pointer
+        return new UserReadDto(principal.getUsername());
     }
 }
