@@ -35,10 +35,6 @@ public class DirectoryService {
     }
 
     public ResourceResponse create(Long userId, String path) {
-        if (path == null || path.isBlank()) {
-            throw new BadRequestException("Невалидный путь");
-        }
-
         String directoryPath = PathUtils.normalizeDirectoryPath(path);
         if (directoryPath.isEmpty()) {
             throw new BadRequestException("Невалидный путь");

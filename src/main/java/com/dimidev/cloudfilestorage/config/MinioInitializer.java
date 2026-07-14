@@ -29,12 +29,12 @@ public class MinioInitializer implements ApplicationRunner {
                 minioClient.makeBucket(MakeBucketArgs.builder()
                         .bucket(bucketName)
                         .build());
-                log.info("Storage bootstrap: Bucket '{}' created successfully.", bucketName);
+                log.info("Инициализация хранилища: бакет '{}' успешно создан.", bucketName);
             } else {
-                log.info("Storage bootstrap: Bucket '{}' already exists.", bucketName);
+                log.info("Инициализация хранилища: бакет '{}' уже существует.", bucketName);
             }
         } catch (Exception e) {
-            log.error("Failed to initialize MinIO bucket: {}", e.getMessage());
+            log.error("Не удалось инициализировать бакет MinIO: {}", e.getMessage());
             throw new IllegalStateException("Не удалось инициализировать MinIO", e);
         }
     }

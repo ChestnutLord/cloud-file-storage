@@ -94,7 +94,7 @@ public class ResourceControllerImpl implements ResourceController {
                                                          @RequestParam(value = "path", defaultValue = "") String path,
                                                          @RequestPart("object") List<MultipartFile> files) {
         log.debug("Получен запрос на загрузку файлов: userId={}, path={}, filesCount={}",
-                userDetails.getId(), path, files == null ? 0 : files.size());
+                userDetails.getId(), path, files.size());
         List<ResourceResponse> resources =
                 resourceService.upload(userDetails.getId(), path, files);
 

@@ -27,13 +27,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleApiException(ApiException e) {
         if (e.getStatusCode().is4xxClientError()) {
             log.warn(
-                    "Api exception [{}]: {}",
+                    "Ошибка API [{}]: {}",
                     e.getClass().getSimpleName(),
                     e.getReason()
             );
         } else {
             log.error(
-                    "Api exception [{}]: {}",
+                    "Ошибка API [{}]: {}",
                     e.getClass().getSimpleName(),
                     e.getReason(),
                     e
@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .orElse("Ошибка валидации");
 
-        log.warn("Validation failed: {}", message);
+        log.warn("Ошибка валидации: {}", message);
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -68,7 +68,7 @@ public class GlobalExceptionHandler {
                 .map(violation -> violation.getMessage())
                 .orElse("Ошибка валидации");
 
-        log.warn("Constraint violation: {}", message);
+        log.warn("Нарушение ограничений: {}", message);
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -78,12 +78,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ClientAbortException.class)
     public void handleClientAbort(ClientAbortException e) {
-        log.debug("Client aborted connection: {}", e.getMessage());
+        log.debug("Клиент разорвал соединение: {}", e.getMessage());
     }
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException e) {
-        log.warn("Authentication failed: {}", e.getMessage());
+        log.warn("Ошибка аутентификации: {}", e.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
@@ -93,7 +93,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException e) {
-        log.warn("Upload size exceeded: {}", e.getMessage());
+        log.warn("Превышен размер загружаемого файла: {}", e.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MissingServletRequestPartException.class)
     public ResponseEntity<ErrorResponse> handleMissingRequestPart(MissingServletRequestPartException e) {
-        log.warn("Missing request part: {}", e.getRequestPartName());
+        log.warn("Отсутствует часть запроса: {}", e.getRequestPartName());
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -113,7 +113,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingRequestParameter(MissingServletRequestParameterException e) {
-        log.warn("Missing request parameter: {}", e.getParameterName());
+        log.warn("Отсутствует параметр запроса: {}", e.getParameterName());
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -123,7 +123,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleUnreadableMessage(HttpMessageNotReadableException e) {
-        log.warn("Unreadable request body: {}", e.getMessage());
+        log.warn("Нечитаемое тело запроса: {}", e.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -133,7 +133,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e) {
-        log.warn("Access denied: {}", e.getMessage());
+        log.warn("Доступ запрещён: {}", e.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
@@ -143,7 +143,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception e) {
-        log.error("exception unexpected: message={}", e.getMessage(), e);
+        log.error("Неожиданная ошибка: сообщение={}", e.getMessage(), e);
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)

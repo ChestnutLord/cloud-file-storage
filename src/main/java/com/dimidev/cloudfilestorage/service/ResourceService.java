@@ -38,10 +38,6 @@ public class ResourceService {
     public List<ResourceResponse> upload(Long userId,
                                          String path,
                                          List<MultipartFile> files) {
-        if (files == null || files.isEmpty()) {
-            throw new BadRequestException("Не переданы файлы для загрузки");
-        }
-
         String targetFolder = PathUtils.normalizeDirectoryPath(path);
         ensureTargetFolderExists(userId, targetFolder);
 
@@ -57,6 +53,41 @@ public class ResourceService {
         return uploadedResources;
     }
 
+    private ResourceResponse uploadFile(Long userId,
+                                        String targetFolder,
+                                        MultipartFile file,
+                                        Set<String> ensuredDirectories) {
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.isBlank()) {
+            throw new BadRequestException("Имя файла не может быть пустым");
+        }
+
+        String relativeFilePath = PathUtils.normalizeFilePath(targetFolder + originalFilename);
+        String storageKey = PathUtils.toStorageKey(userId, relativeFilePath);
+
+        if (storageRepository.exists(storageKey)) {
+            throw new DuplicateResourceException("Файл уже существует");
+        }
+
+        String parentDirectory = PathUtils.splitFilePath(relativeFilePath).path();
+        ensureDirectoryHierarchyExists(userId, parentDirectory, ensuredDirectories);
+
+        try {
+            StoredFile storedFile = new StoredFile(
+                    storageKey,
+                    file.getInputStream(),
+                    file.getSize(),
+                    file.getContentType()
+            );
+            storageRepository.upload(storedFile);
+        } catch (IOException e) {
+            throw new StorageException("Ошибка чтения файла", e);
+        }
+
+        ResourcePathParts parts = PathUtils.splitFilePath(relativeFilePath);
+        return resourceMapper.toFileResponse(parts.path(), parts.name(), file.getSize());
+    }
+
     public ResourceResponse get(Long userId, String path) {
         String resourcePath = PathUtils.normalizeResourcePath(path);
         String storageKey = PathUtils.toStorageKey(userId, resourcePath);
@@ -68,10 +99,6 @@ public class ResourceService {
     }
 
     public List<ResourceResponse> search(Long userId, String query) {
-        if (query == null || query.isBlank()) {
-            throw new BadRequestException("Невалидный поисковый запрос");
-        }
-
         String normalizedQuery = query.trim().toLowerCase();
         String userPrefix = PathUtils.userStoragePrefix(userId);
 
@@ -219,41 +246,6 @@ public class ResourceService {
         } catch (IOException e) {
             throw new StorageException("Не удалось создать zip-архив", e);
         }
-    }
-
-    private ResourceResponse uploadFile(Long userId,
-                                        String targetFolder,
-                                        MultipartFile file,
-                                        Set<String> ensuredDirectories) {
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null || originalFilename.isBlank()) {
-            throw new BadRequestException("Имя файла не может быть пустым");
-        }
-
-        String relativeFilePath = PathUtils.normalizeFilePath(targetFolder + originalFilename);
-        String storageKey = PathUtils.toStorageKey(userId, relativeFilePath);
-
-        if (storageRepository.exists(storageKey)) {
-            throw new DuplicateResourceException("Файл уже существует");
-        }
-
-        String parentDirectory = PathUtils.splitFilePath(relativeFilePath).path();
-        ensureDirectoryHierarchyExists(userId, parentDirectory, ensuredDirectories);
-
-        try {
-            StoredFile storedFile = new StoredFile(
-                    storageKey,
-                    file.getInputStream(),
-                    file.getSize(),
-                    file.getContentType()
-            );
-            storageRepository.upload(storedFile);
-        } catch (IOException e) {
-            throw new StorageException("Ошибка чтения файла", e);
-        }
-
-        ResourcePathParts parts = PathUtils.splitFilePath(relativeFilePath);
-        return resourceMapper.toFileResponse(parts.path(), parts.name(), file.getSize());
     }
 
     private void ensureTargetFolderExists(Long userId, String targetFolder) {

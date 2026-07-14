@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -102,6 +103,7 @@ public interface ResourceController {
                                                   @RequestParam(defaultValue = "") String path,
                                                   @Parameter(description = "Файлы для загрузки")
                                                   @RequestPart("object")
+                                                  @NotEmpty(message = "Не переданы файлы для загрузки")
                                                   List<MultipartFile> files
     );
 }
